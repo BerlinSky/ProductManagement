@@ -5,9 +5,23 @@
                              "ui.router",
                              "ui.mask",
                              "ui.bootstrap",
+                             "angularCharts",
                              "productResourceMock"]);
 
-   app.config(["$stateProvider",
+    app.config(function ($provide) {
+        $provide.decorator("$exceptionHandler",
+            ["$delegate",
+                function ($delegate) {
+                    return function (exception, cause) {
+                        exception.message = "Please contact the Help Desk! \n Message: " +
+                                                                exception.message;
+                        $delegate(exception, cause);
+                        alert(exception.message);
+                    };
+                }]);
+    });
+
+    app.config(["$stateProvider",
             "$urlRouterProvider",
             function ($stateProvider, $urlRouterProvider) {
                 $urlRouterProvider.otherwise("/");
@@ -49,7 +63,6 @@
                         url: "/tags",
                         templateUrl: "app/products/productEditTagsView.html"
                     })
-
                     .state("productDetail", {
                         url: "/products/:productId",
                         templateUrl: "app/products/productDetailView.html",
@@ -63,8 +76,29 @@
                             }
                         }
                     })
+                    .state("priceAnalytics", {
+                        url: "/priceAnalytics",
+                        templateUrl:"app/prices/priceAnalyticsView.html",
+                        controller: "PriceAnalyticsCtrl",
+                        resolve: {
+                            productResource: "productResource",
 
+                            products: function (productResource) {
+                                return productResource.query(function(response) {
+                                        // no code needed for success
+                                    },
+                                    function(response) {
+                                        if (response.status == 404) {
+                                            alert("Error accessing resource: " +
+                                                response.config.method + " " +response.config.url);
+                                        } else {
+                                            alert(response.statusText);
+                                        }
+                                    }).$promise;
+
+                            }
+                        }
+                    })
             }]
     );
-
 }());
